@@ -1,0 +1,43 @@
+name: Обновление данных дэшборда
+
+on:
+  schedule:
+    # 05:00 по Астане (UTC+5) каждый день = 00:00 UTC.
+    # Источники обновляются не каждый день, но проверка ежедневная —
+    # ничего не публикуется, если ни одно значение не изменилось.
+    - cron: "0 0 * * *"
+  workflow_dispatch: {}  # кнопка "Run workflow" в вкладке Actions — запуск вручную
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Установить зависимости
+        run: |
+          pip install -r scraper/requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Запустить скрапер
+        id: run_scraper
+        run: python3 scraper/update_data.py
+
+      - name: Закоммитить data.json, если изменился
+        run: |
+          git config user.name "kz-econ-dashboard-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet -- data.json; then
+            echo "Изменений нет, коммит не нужен"
+          else
+            git add data.json
+            git commit -m "Автообновление данных дэшборда"
+            git push
+          fi
