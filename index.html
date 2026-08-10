@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kazakhstan Economy App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #2a78d6;
+    --positive:       #1a7f37;
+    --positive-bg:    rgba(26,127,55,0.10);
+    --negative:       #cf222e;
+    --negative-bg:    rgba(207,34,46,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --border:         rgba(255,255,255,0.10);
+      --accent:         #3987e5;
+      --positive:       #4ac26b;
+      --positive-bg:    rgba(74,194,107,0.14);
+      --negative:       #f47067;
+      --negative-bg:    rgba(244,112,103,0.14);
+    }
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--page);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ===== app shell / tabs ===== */
+  .app-header {
+    padding: 18px 16px 4px;
+  }
+  .app-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+  }
+  .app-header p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+  .app-main {
+    flex: 1 1 auto;
+    padding: 12px 16px calc(84px + env(safe-area-inset-bottom));
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .placeholder {
+    margin-top: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 0 12px;
+  }
+  .placeholder .emoji { font-size: 32px; display: block; margin-bottom: 12px; }
+  .placeholder b { color: var(--text-secondary); display: block; margin-bottom: 6px; font-size: 15px; }
+
+  .tabbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    background: var(--surface-1);
+    border-top: 1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    gap: 2px;
+    z-index: 10;
+  }
+  .tab-btn {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    padding: 6px 2px;
+    border-radius: 10px;
+    font-family: inherit;
+    color: var(--text-muted);
+    font-size: 10.5px;
+    cursor: pointer;
+  }
+  .tab-btn .icon { font-size: 19px; line-height: 1; }
+  .tab-btn.active { color: var(--accent); }
+
+  /* ===== dashboard grid ===== */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .tile .top-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .tile .label {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.3;
+  }
+  .tile .value {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-variant-numeric: proportional-nums;
+  }
+  .tile .value.empty {
+    color: var(--text-muted);
+    font-size: 22px;
+  }
+  .tile .value-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .tile .value-row .value { margin-bottom: 0; }
+  .tile .yoy-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+    font-variant-numeric: proportional-nums;
+  }
+  .tile .yoy-badge.up { color: var(--positive); background: var(--positive-bg); }
+  .tile .yoy-badge.down { color: var(--negative); background: var(--negative-bg); }
+  .tile .yoy-badge.flat { color: var(--text-muted); background: var(--gridline); }
+  .tile .period {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .tile .footer-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--gridline);
+    padding-top: 8px;
+    font-size: 10.5px;
+    color: var(--text-muted);
+  }
+  .next-update-soon { color: var(--accent) !important; font-weight: 600; }
+
+  .howto {
+    margin-top: 24px;
+    padding: 14px 16px;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .howto b { color: var(--text-primary); }
+  code {
+    background: var(--gridline);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+
+  /* ===== access gate ===== */
+  #gate[hidden] { display: none; }
+  #gate {
+    position: fixed; inset: 0;
+    background: var(--page);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px;
+    text-align: center;
+    z-index: 100;
+  }
+  #gate .emoji { font-size: 36px; }
+  #gate p { color: var(--text-secondary); font-size: 14px; max-width: 280px; }
+</style>
+</head>
+<body>
+
+<div id="gate" hidden>
+  <span class="emoji">🔒</span>
+  <p>Доступ к этому приложению ограничен. Если вы считаете, что это ошибка — напишите тому, кто вас пригласил.</p>
+</div>
+
+<div class="app-header">
+  <h1>Экономика Казахстана</h1>
+  <p id="asOf">Республика Казахстан</p>
+</div>
+
+<main class="app-main">
+
+  <section id="tab-dashboard" class="tab-panel active">
+    <div class="grid" id="grid"></div>
+    <div class="howto">
+      <b>Как обновить данные:</b> открой этот файл в текстовом редакторе, найди блок
+      <code>const DATA = [ ... ]</code> и поменяй нужные значения
+      (<code>value</code>, <code>period</code>, <code>published</code>, <code>nextUpdate</code>,
+      <code>yoy.value</code>). Сохрани и опубликуй файл заново — приложение обновится при
+      следующем открытии. Бейдж динамики (зелёный/красный) считается автоматически по знаку
+      <code>yoy.value</code> — для карточек, где сам показатель уже ставка/темп роста, туда
+      пишется разница в п.п.; для остальных — % к аналогичному периоду прошлого года.
+    </div>
+  </section>
+
+  <section id="tab-news" class="tab-panel">
+    <div class="placeholder">
+      <span class="emoji">📰</span>
+      <b>Новости — скоро</b>
+      Раздел ещё не собран. Здесь появится лента новостей по казахстанской экономике.
+    </div>
+  </section>
+
+  <section id="tab-ai" class="tab-panel">
+    <div class="placeholder">
+      <span class="emoji">🤖</span>
+      <b>Вопросы к ИИ — скоро</b>
+      Раздел ещё не собран. Здесь можно будет задать вопрос про экономику Казахстана и
+      получить ответ, опирающийся на данные с вкладки «Дэшборд».
+    </div>
+  </section>
+
+</main>
+
+<nav class="tabbar">
+  <button class="tab-btn active" data-tab="dashboard"><span class="icon">📊</span><span>Дэшборд</span></button>
+  <button class="tab-btn" data-tab="news"><span class="icon">📰</span><span>Новости</span></button>
+  <button class="tab-btn" data-tab="ai"><span class="icon">🤖</span><span>ИИ</span></button>
+</nav>
+
+<script>
+  // ======================================================================
+  // ДОСТУП — необязательный список Telegram user ID, кому разрешено
+  // открывать приложение. Оставь массив пустым ( [] ), чтобы пускать всех,
+  // у кого есть ссылка на бота. Это ТОЛЬКО клиентская проверка (для скрытия
+  // экрана от посторонних) — она не защищает от человека, который умеет
+  // читать код страницы. Для настоящей приватности такую проверку нужно
+  // делать на сервере по подписи initData, а не в браузере.
+  // Узнать свой Telegram user ID можно, написав боту @userinfobot.
+  // ======================================================================
+  const ALLOWED_USER_IDS = []; // напр. [123456789, 987654321]
+
+  // ======================================================================
+  // ДАННЫЕ ДЭШБОРДА — редактируй этот блок при выходе новой статистики.
+  // ======================================================================
+  const DATA = [
+    {
+      label: "Рост ВВП (г/г)",
+      value: "4.1%",
+      period: "Январь–июнь 2026",
+      published: "2026-07-14",
+      nextUpdate: "2026-08-14",
+      approx: true,
+      source: "МНЭ РК (gov.kz)",
+      url: "https://www.gov.kz/memleket/entities/economy/press/news/details/1257661?lang=ru",
+      yoy: { value: -2.1, unit: "п.п.", refPeriod: "янв–июн 2025 (6.2%)" }
+    },
+    {
+      label: "Инфляция (годовая)",
+      value: "10.2%",
+      period: "Июль 2026 к июлю 2025",
+      published: "2026-08-03",
+      nextUpdate: "2026-09-01",
+      approx: false,
+      source: "Бюро нацстатистики РК",
+      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/509832/",
+      yoy: { value: -1.6, unit: "п.п.", refPeriod: "июль 2025 (11.8%)" }
+    },
+    {
+      label: "Инфляция — продовольственные товары",
+      value: "10.1%",
+      period: "Июль 2026 к июлю 2025",
+      published: "2026-08-03",
+      nextUpdate: "2026-09-01",
+      approx: false,
+      source: "Бюро нацстатистики РК",
+      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/509832/",
+      yoy: { value: -1.1, unit: "п.п.", refPeriod: "июль 2025 (11.2%)" }
+    },
+    {
+      label: "Инфляция — непродовольственные товары",
+      value: "11.7%",
+      period: "Июль 2026 к июлю 2025",
+      published: "2026-08-03",
+      nextUpdate: "2026-09-01",
+      approx: false,
+      source: "Бюро нацстатистики РК",
+      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/509832/",
+      yoy: { value: 2.2, unit: "п.п.", refPeriod: "июль 2025 (9.5%)" }
+    },
+    {
+      label: "Инфляция — платные услуги",
+      value: "9.2%",
+      period: "Июль 2026 к июлю 2025",
+      published: "2026-08-03",
+      nextUpdate: "2026-09-01",
+      approx: false,
+      source: "Бюро нацстатистики РК",
+      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/509832/",
+      yoy: { value: -5.7, unit: "п.п.", refPeriod: "июль 2025 (14.9%)" }
+    },
+    {
+      label: "Рост обрабатывающей промышленности (г/г)",
+      value: "9.8%",
+      period: "Январь–июнь 2026",
+      published: "2026-07-14",
+      nextUpdate: "2026-08-17",
+      approx: false,
+      source: "Бюро нацстатистики РК",
+      url: "https://stat.gov.kz/ru/industries/business-statistics/stat-industrial-production/",
+      yoy: { value: 4.3, unit: "п.п.", refPeriod: "янв–июн 2025 (5.5%)" }
+    },
+    {
+      label: "ИОК",
+      value: "9.51 трлн ₸",
+      period: "Январь–июнь 2026",
+      published: "2026-07-17",
+      nextUpdate: "2026-08-17",
+      approx: false,
+      source: "Бюро нацстатистики РК",
+      url: "https://stat.gov.kz/ru/industries/business-statistics/stat-invest/",
+      yoy: { value: 9.6, unit: "%", refPeriod: "янв–июн 2025 (в сопост. ценах)" }
+    },
+    {
+      label: "Чистый приток ПИИ в Казахстан",
+      value: "$3.07 млрд",
+      period: "I квартал 2026",
+      published: "2026-07-10",
+      nextUpdate: "2026-09-30",
+      approx: false,
+      source: "Нацбанк РК",
+      url: "https://nationalbank.kz/ru/news/pryamye-investicii-po-napravleniyu-vlozheniya",
+      yoy: { value: 6.5, unit: "%", refPeriod: "I кв 2025 ($2.88 млрд)" }
+    },
+    {
+      label: "Нефть Brent (ICE)",
+      value: "$80.45",
+      period: "За баррель · ближайший фьючерс, 05.08.2026 11:11 GMT",
+      published: "2026-08-05",
+      nextUpdate: "2026-08-06",
+      approx: true,
+      noNextUpdate: true,
+      source: "ICE Futures Europe",
+      url: "https://www.ice.com/products/219/Brent-Crude-Futures/data",
+      yoy: { value: 20.4, unit: "%", refPeriod: "5 авг 2025 (≈$66.8/барр.)" }
+    },
+    {
+      label: "Медь (LME)",
+      value: "$14 195",
+      period: "За тонну · официальный расчётный кэш-курс, 04.08.2026",
+      published: "2026-08-04",
+      nextUpdate: "2026-08-05",
+      approx: true,
+      noNextUpdate: true,
+      source: "London Metal Exchange",
+      url: "https://www.lme.com/metals/non-ferrous/lme-copper",
+      yoy: { value: 47.5, unit: "%", refPeriod: "04.08.2025 ($9 622.5/т)" }
+    },
+    {
+      label: "Вклады в БВУ (физ. + юр. лица)",
+      value: "50.14 трлн ₸",
+      period: "На конец июня 2026",
+      published: "2026-07-16",
+      nextUpdate: "2026-08-17",
+      approx: false,
+      source: "Нацбанк РК",
+      url: "https://nationalbank.kz/ru/depositoryorganizationsdeposits/depozity-v-depozitnyh-organizaciyah-",
+      yoy: { value: 18.9, unit: "%", refPeriod: "июнь 2025 (42.17 трлн ₸)" }
+    },
+    {
+      label: "Свободная ликвидность банков в бумагах гос-ва",
+      value: "8.94 трлн ₸",
+      period: "На 01.07.2026 (ГЦБ + ноты НБК, резиденты)",
+      published: "2026-07-30",
+      nextUpdate: "2026-10-30",
+      approx: true,
+      source: "Нацбанк РК",
+      url: "https://nationalbank.kz/ru/news/banks-performance",
+      yoy: { value: 12.0, unit: "%", refPeriod: "01.07.2025 (7.98 трлн ₸)" }
+    },
+    {
+      label: "Базовая ставка Нацбанка РК",
+      value: "16.75%",
+      period: "Действует с 24.07.2026",
+      published: "2026-07-24",
+      nextUpdate: "2026-09-04",
+      approx: false,
+      source: "Нацбанк РК",
+      url: "https://nationalbank.kz/ru/page/bazovaya-stavka-dkp-functions"
+    }
+  ];
+
+  function formatDate(iso) {
+    const d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+  }
+
+  function daysUntil(iso) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const target = new Date(iso + "T00:00:00");
+    return Math.round((target - today) / 86400000);
+  }
+
+  function renderDashboard() {
+    document.getElementById("asOf").textContent =
+      "Республика Казахстан · открыто " + new Date().toLocaleDateString("ru-RU");
+
+    const grid = document.getElementById("grid");
+    grid.innerHTML = DATA.map(item => {
+      const days = daysUntil(item.nextUpdate);
+      const soon = days <= 3 && days >= 0;
+      const nextLabel = (item.approx ? "≈ " : "") + formatDate(item.nextUpdate) +
+        (days >= 0 ? ` (через ${days} дн.)` : "");
+      const valueClass = item.value === "—" ? "value empty" : "value";
+
+      let yoyHtml = "";
+      if (item.yoy && typeof item.yoy.value === "number") {
+        const v = item.yoy.value;
+        const dir = v > 0 ? "up" : (v < 0 ? "down" : "flat");
+        const arrow = v > 0 ? "▲" : (v < 0 ? "▼" : "•");
+        const signedValue = (v > 0 ? "+" : "") + v + " " + item.yoy.unit;
+        yoyHtml = `<span class="yoy-badge ${dir}" title="к ${item.yoy.refPeriod}">${arrow} ${signedValue}</span>`;
+      }
+
+      return `
+        <div class="tile">
+          <div class="top-line">
+            <span class="label">${item.label}</span>
+          </div>
+          <div class="value-row">
+            <span class="${valueClass}">${item.value}</span>
+            ${yoyHtml}
+          </div>
+          <div class="period">${item.period}${item.yoy ? " · к " + item.yoy.refPeriod : ""}</div>
+          <div class="footer-line">
+            <span>обновлено ${formatDate(item.published)}</span>
+            ${item.noNextUpdate ? "" : `<span class="${soon ? "next-update-soon" : ""}">след. данные: ${nextLabel}</span>`}
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  // ======================================================================
+  // ВКЛАДКИ
+  // ======================================================================
+  function initTabs() {
+    const buttons = document.querySelectorAll(".tab-btn");
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.dataset.tab;
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        document.getElementById("tab-" + target).classList.add("active");
+        buttons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred("light");
+        }
+      });
+    });
+  }
+
+  // ======================================================================
+  // TELEGRAM WEB APP — синхронизация темы и оформления с клиентом Telegram.
+  // Если страница открыта не из Telegram (обычный браузер), просто ничего
+  // не делает и работает как обычный сайт на CSS prefers-color-scheme.
+  // ======================================================================
+  function initTelegram() {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (!tg) return;
+
+    tg.ready();
+    tg.expand();
+
+    const applyTheme = () => {
+      const p = tg.themeParams || {};
+      const root = document.documentElement.style;
+      if (p.bg_color)           root.setProperty("--surface-1", p.bg_color);
+      if (p.secondary_bg_color) root.setProperty("--page", p.secondary_bg_color);
+      if (p.text_color)         root.setProperty("--text-primary", p.text_color);
+      if (p.hint_color)         root.setProperty("--text-secondary", p.hint_color);
+      if (p.hint_color)         root.setProperty("--text-muted", p.hint_color);
+      if (p.link_color)         root.setProperty("--accent", p.link_color);
+      if (p.section_separator_color) root.setProperty("--gridline", p.section_separator_color);
+      if (typeof tg.setHeaderColor === "function" && p.secondary_bg_color) {
+        try { tg.setHeaderColor(p.secondary_bg_color); } catch (e) {}
+      }
+      if (typeof tg.setBackgroundColor === "function" && p.secondary_bg_color) {
+        try { tg.setBackgroundColor(p.secondary_bg_color); } catch (e) {}
+      }
+    };
+    applyTheme();
+    tg.onEvent("themeChanged", applyTheme);
+
+    // Необязательная проверка доступа — см. ALLOWED_USER_IDS выше.
+    if (ALLOWED_USER_IDS.length > 0) {
+      const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+      const uid = user && user.id;
+      if (!uid || !ALLOWED_USER_IDS.includes(uid)) {
+        document.getElementById("gate").hidden = false;
+        document.querySelector(".app-header").style.display = "none";
+        document.querySelector(".app-main").style.display = "none";
+        document.querySelector(".tabbar").style.display = "none";
+      }
+    }
+  }
+
+  initTelegram();
+  renderDashboard();
+  initTabs();
+</script>
+</body>
+</html>
