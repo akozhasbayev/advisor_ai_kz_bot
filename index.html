@@ -235,13 +235,15 @@
   <section id="tab-dashboard" class="tab-panel active">
     <div class="grid" id="grid"></div>
     <div class="howto">
-      <b>Как обновить данные:</b> открой этот файл в текстовом редакторе, найди блок
-      <code>const DATA = [ ... ]</code> и поменяй нужные значения
-      (<code>value</code>, <code>period</code>, <code>published</code>, <code>nextUpdate</code>,
-      <code>yoy.value</code>). Сохрани и опубликуй файл заново — приложение обновится при
-      следующем открытии. Бейдж динамики (зелёный/красный) считается автоматически по знаку
-      <code>yoy.value</code> — для карточек, где сам показатель уже ставка/темп роста, туда
-      пишется разница в п.п.; для остальных — % к аналогичному периоду прошлого года.
+      <b>Как обновляются данные:</b> 10 из 13 карточек тянутся автоматически из
+      <code>data.json</code> — его раз в сутки переписывает GitHub Actions
+      (см. <code>scraper/</code> в репозитории). Карточки «Рост ВВП», «ПИИ» и «Свободная
+      ликвидность банков» пока обновляются вручную — правь их прямо в <code>data.json</code>
+      (тот же набор полей: <code>value</code>, <code>period</code>, <code>published</code>,
+      <code>nextUpdate</code>, <code>yoy.value</code>). Бейдж динамики (зелёный/красный)
+      считается автоматически по знаку <code>yoy.value</code> — для карточек, где сам
+      показатель уже ставка/темп роста, туда пишется разница в п.п.; для остальных — %
+      к аналогичному периоду прошлого года.
     </div>
   </section>
 
@@ -283,9 +285,16 @@
   const ALLOWED_USER_IDS = []; // напр. [123456789, 987654321]
 
   // ======================================================================
-  // ДАННЫЕ ДЭШБОРДА — редактируй этот блок при выходе новой статистики.
+  // ДАННЫЕ ДЭШБОРДА.
+  // Основной источник — data.json (лежит рядом с этим файлом в репозитории)
+  // и обновляется автоматически GitHub Actions по расписанию для 10 из 13
+  // карточек (см. scraper/README.md). ВВП, ПИИ и свободная ликвидность
+  // банков обновляются вручную — см. пометку manual_only_ids в data.json.
+  // FALLBACK_DATA ниже используется, только если data.json не загрузился
+  // (например, файл открыли локально без веб-сервера) — тогда показываются
+  // последние известные значения на момент последней публикации этой версии.
   // ======================================================================
-  const DATA = [
+  const FALLBACK_DATA = [
     {
       label: "Рост ВВП (г/г)",
       value: "4.1%",
@@ -298,56 +307,57 @@
       yoy: { value: -2.1, unit: "п.п.", refPeriod: "янв–июн 2025 (6.2%)" }
     },
     {
-      label: "Инфляция (годовая)",
+      label: "Инфляция (г/г)",
       value: "10.2%",
-      period: "Июль 2026 к июлю 2025",
+      period: "Июле 2026",
       published: "2026-08-03",
       nextUpdate: "2026-09-01",
       approx: false,
       source: "Бюро нацстатистики РК",
-      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/509832/",
+      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/",
       yoy: { value: -1.6, unit: "п.п.", refPeriod: "июль 2025 (11.8%)" }
     },
     {
-      label: "Инфляция — продовольственные товары",
+      label: "Инфляция: продовольственные товары (г/г)",
       value: "10.1%",
-      period: "Июль 2026 к июлю 2025",
+      period: "Июле 2026",
       published: "2026-08-03",
       nextUpdate: "2026-09-01",
       approx: false,
       source: "Бюро нацстатистики РК",
-      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/509832/",
+      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/",
       yoy: { value: -1.1, unit: "п.п.", refPeriod: "июль 2025 (11.2%)" }
     },
     {
-      label: "Инфляция — непродовольственные товары",
+      label: "Инфляция: непродовольственные товары (г/г)",
       value: "11.7%",
-      period: "Июль 2026 к июлю 2025",
+      period: "Июле 2026",
       published: "2026-08-03",
       nextUpdate: "2026-09-01",
       approx: false,
       source: "Бюро нацстатистики РК",
-      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/509832/",
+      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/",
       yoy: { value: 2.2, unit: "п.п.", refPeriod: "июль 2025 (9.5%)" }
     },
     {
-      label: "Инфляция — платные услуги",
+      label: "Инфляция: платные услуги (г/г)",
       value: "9.2%",
-      period: "Июль 2026 к июлю 2025",
+      period: "Июле 2026",
       published: "2026-08-03",
       nextUpdate: "2026-09-01",
       approx: false,
       source: "Бюро нацстатистики РК",
-      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/509832/",
+      url: "https://stat.gov.kz/ru/industries/economy/prices/publications/",
       yoy: { value: -5.7, unit: "п.п.", refPeriod: "июль 2025 (14.9%)" }
     },
     {
       label: "Рост обрабатывающей промышленности (г/г)",
       value: "9.8%",
-      period: "Январь–июнь 2026",
-      published: "2026-07-14",
-      nextUpdate: "2026-08-17",
+      period: "Январь-июнь 2026",
+      published: "2026-08-10",
+      nextUpdate: null,
       approx: false,
+      noNextUpdate: true,
       source: "Бюро нацстатистики РК",
       url: "https://stat.gov.kz/ru/industries/business-statistics/stat-industrial-production/",
       yoy: { value: 4.3, unit: "п.п.", refPeriod: "янв–июн 2025 (5.5%)" }
@@ -355,13 +365,14 @@
     {
       label: "ИОК",
       value: "9.51 трлн ₸",
-      period: "Январь–июнь 2026",
-      published: "2026-07-17",
-      nextUpdate: "2026-08-17",
+      period: "Январь-июнь 2026",
+      published: "2026-08-10",
+      nextUpdate: null,
       approx: false,
+      noNextUpdate: true,
       source: "Бюро нацстатистики РК",
       url: "https://stat.gov.kz/ru/industries/business-statistics/stat-invest/",
-      yoy: { value: 9.6, unit: "%", refPeriod: "янв–июн 2025 (в сопост. ценах)" }
+      yoy: { value: 9.6, unit: "%", refPeriod: "январь-июнь 2026 (в сопост. ценах)" }
     },
     {
       label: "Чистый приток ПИИ в Казахстан",
@@ -376,27 +387,27 @@
     },
     {
       label: "Нефть Brent (ICE)",
-      value: "$80.45",
-      period: "За баррель · ближайший фьючерс, 05.08.2026 11:11 GMT",
-      published: "2026-08-05",
-      nextUpdate: "2026-08-06",
-      approx: true,
+      value: "$84.84",
+      period: "Фронт-месяц Oct26",
+      published: "2026-08-10",
+      nextUpdate: null,
+      approx: false,
       noNextUpdate: true,
       source: "ICE Futures Europe",
       url: "https://www.ice.com/products/219/Brent-Crude-Futures/data",
-      yoy: { value: 20.4, unit: "%", refPeriod: "5 авг 2025 (≈$66.8/барр.)" }
+      yoy: { value: 26.9, unit: "%", refPeriod: "≈ первая неделя августа 2025 ($66.83)" }
     },
     {
       label: "Медь (LME)",
-      value: "$14 195",
-      period: "За тонну · официальный расчётный кэш-курс, 04.08.2026",
-      published: "2026-08-04",
-      nextUpdate: "2026-08-05",
-      approx: true,
+      value: "$14 240",
+      period: "Расчётная цена, 07.08.2026",
+      published: "2026-08-07",
+      nextUpdate: null,
+      approx: false,
       noNextUpdate: true,
-      source: "London Metal Exchange",
-      url: "https://www.lme.com/metals/non-ferrous/lme-copper",
-      yoy: { value: 47.5, unit: "%", refPeriod: "04.08.2025 ($9 622.5/т)" }
+      source: "LME (через westmetall.com)",
+      url: "https://www.westmetall.com/en/markdaten.php?action=table&field=LME_Cu_cash",
+      yoy: { value: 47.8, unit: "%", refPeriod: "07.08.2025 ($9 636)" }
     },
     {
       label: "Вклады в БВУ (физ. + юр. лица)",
@@ -407,7 +418,7 @@
       approx: false,
       source: "Нацбанк РК",
       url: "https://nationalbank.kz/ru/depositoryorganizationsdeposits/depozity-v-depozitnyh-organizaciyah-",
-      yoy: { value: 18.9, unit: "%", refPeriod: "июнь 2025 (42.17 трлн ₸)" }
+      yoy: { value: 18.9, unit: "%", refPeriod: "июня 2025 (42.17 трлн ₸)" }
     },
     {
       label: "Свободная ликвидность банков в бумагах гос-ва",
@@ -423,14 +434,30 @@
     {
       label: "Базовая ставка Нацбанка РК",
       value: "16.75%",
-      period: "Действует с 24.07.2026",
-      published: "2026-07-24",
+      period: "Действует с 27.07.2026",
+      published: "2026-07-27",
       nextUpdate: "2026-09-04",
       approx: false,
       source: "Нацбанк РК",
-      url: "https://nationalbank.kz/ru/page/bazovaya-stavka-dkp-functions"
+      url: "https://nationalbank.kz/ru/news/grafik-prinyatiya-resheniy-po-bazovoy-stavke",
+      yoy: null
     }
   ];
+
+  let DATA = FALLBACK_DATA;
+
+  async function loadData() {
+    try {
+      const res = await fetch("./data.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      if (Array.isArray(json.items) && json.items.length > 0) {
+        DATA = json.items;
+      }
+    } catch (e) {
+      console.warn("Не удалось загрузить data.json, показаны встроенные данные:", e);
+    }
+  }
 
   function formatDate(iso) {
     const d = new Date(iso + "T00:00:00");
@@ -548,7 +575,7 @@
   }
 
   initTelegram();
-  renderDashboard();
+  loadData().then(renderDashboard);
   initTabs();
 </script>
 </body>
