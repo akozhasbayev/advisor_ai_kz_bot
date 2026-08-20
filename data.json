@@ -1,154 +1,19 @@
 {
-  "generated_at": "2026-08-20T06:54:50.555602Z",
+  "generated_at": "2026-08-20T11:14:49.878989Z",
   "items": [
-    {
-      "id": "fdi",
-      "label": "Чистый приток ПИИ в Казахстан",
-      "value": "$3.07 млрд",
-      "period": "I квартал 2026",
-      "published": "2026-07-10",
-      "nextUpdate": "2026-09-30",
-      "approx": false,
-      "source": "Нацбанк РК",
-      "url": "https://nationalbank.kz/ru/news/pryamye-investicii-po-napravleniyu-vlozheniya",
-      "yoy": {
-        "value": 6.5,
-        "unit": "%",
-        "refPeriod": "I кв 2025 ($2.88 млрд)"
-      }
-    },
-    {
-      "id": "liquidity",
-      "label": "Свободная ликвидность банков в бумагах гос-ва",
-      "value": "8.94 трлн ₸",
-      "period": "На 01.07.2026 (ГЦБ + ноты НБК, резиденты)",
-      "published": "2026-07-30",
-      "nextUpdate": "2026-10-30",
-      "approx": true,
-      "source": "Нацбанк РК",
-      "url": "https://nationalbank.kz/ru/news/banks-performance",
-      "yoy": {
-        "value": 12.0,
-        "unit": "%",
-        "refPeriod": "01.07.2025 (7.98 трлн ₸)"
-      }
-    },
     {
       "id": "gdp",
       "label": "Рост ВВП (г/г)",
-      "value": "6.5%",
-      "period": "Января–декабря 2025",
-      "published": "2026-01-12",
+      "value": "4.1%",
+      "period": "Первого полугодия 2026",
+      "published": "2026-07-14",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
       "source": "МНЭ РК (gov.kz)",
-      "url": "https://www.gov.kz/memleket/entities/economy/press/news/details/1139501?lang=ru",
+      "url": "https://www.gov.kz/memleket/entities/economy/press/news/details/1257661?lang=ru",
       "yoy": null,
-      "_raw_value_pct": 6.5
-    },
-    {
-      "id": "base_rate",
-      "label": "Базовая ставка Нацбанка РК",
-      "value": "16.75%",
-      "period": "Действует с 27.07.2026",
-      "published": "2026-07-27",
-      "nextUpdate": "2026-09-04",
-      "approx": false,
-      "noNextUpdate": false,
-      "source": "Нацбанк РК",
-      "url": "https://nationalbank.kz/ru/news/grafik-prinyatiya-resheniy-po-bazovoy-stavke",
-      "yoy": null,
-      "_raw_value_pct": 16.75
-    },
-    {
-      "id": "manufacturing",
-      "label": "Рост обрабатывающей промышленности (г/г)",
-      "value": "9.0%",
-      "period": "Январь-июль 2026",
-      "published": "2026-08-20",
-      "nextUpdate": null,
-      "approx": false,
-      "noNextUpdate": true,
-      "source": "Бюро нацстатистики РК",
-      "url": "https://stat.gov.kz/ru/industries/business-statistics/stat-industrial-production/",
-      "yoy": {
-        "value": 3.5,
-        "unit": "п.п.",
-        "refPeriod": "янв–июн 2025 (5.5%)"
-      },
-      "_raw_growth_pct": 9.0
-    },
-    {
-      "id": "iok",
-      "label": "ИОК",
-      "value": "11.46 трлн ₸",
-      "period": "Январь-июль 2026",
-      "published": "2026-08-20",
-      "nextUpdate": null,
-      "approx": false,
-      "noNextUpdate": true,
-      "source": "Бюро нацстатистики РК",
-      "url": "https://stat.gov.kz/ru/industries/business-statistics/stat-invest/",
-      "yoy": {
-        "value": 7.7,
-        "unit": "%",
-        "refPeriod": "январь-июль 2026 (в сопост. ценах)"
-      },
-      "_raw_value_bln_tenge": 11464.2
-    },
-    {
-      "id": "brent",
-      "label": "Нефть Brent (ICE)",
-      "value": "$84.84",
-      "period": "Фронт-месяц Oct26",
-      "published": "2026-08-10",
-      "nextUpdate": null,
-      "approx": false,
-      "noNextUpdate": true,
-      "source": "ICE Futures Europe",
-      "url": "https://www.ice.com/products/219/Brent-Crude-Futures/data",
-      "yoy": {
-        "value": 26.9,
-        "unit": "%",
-        "refPeriod": "≈ первая неделя августа 2025 ($66.83)"
-      },
-      "_raw_value_usd": 84.84
-    },
-    {
-      "id": "copper",
-      "label": "Медь (LME)",
-      "value": "$14 180",
-      "period": "Расчётная цена, 19.08.2026",
-      "published": "2026-08-19",
-      "nextUpdate": null,
-      "approx": false,
-      "noNextUpdate": true,
-      "source": "LME (через westmetall.com)",
-      "url": "https://www.westmetall.com/en/markdaten.php?action=table&field=LME_Cu_cash",
-      "yoy": {
-        "value": 47.4,
-        "unit": "%",
-        "refPeriod": "19.08.2025 ($9 622)"
-      },
-      "_raw_value_usd": 14180.0
-    },
-    {
-      "id": "deposits",
-      "label": "Вклады в БВУ (физ. + юр. лица)",
-      "value": "50.14 трлн ₸",
-      "period": "На конец июня 2026",
-      "published": "2026-07-16",
-      "nextUpdate": "2026-08-17",
-      "approx": false,
-      "source": "Нацбанк РК",
-      "url": "https://nationalbank.kz/ru/depositoryorganizationsdeposits/depozity-v-depozitnyh-organizaciyah-",
-      "yoy": {
-        "value": 18.9,
-        "unit": "%",
-        "refPeriod": "июня 2025 (42.17 трлн ₸)"
-      },
-      "_raw_value_mln_tenge": 50135442
+      "_raw_value_pct": 4.1
     },
     {
       "id": "inflation_headline",
@@ -217,6 +82,141 @@
         "refPeriod": "июль 2025 (14.9%)"
       },
       "_raw_headline_pct": null
+    },
+    {
+      "id": "manufacturing",
+      "label": "Рост обрабатывающей промышленности (г/г)",
+      "value": "9.0%",
+      "period": "Январь-июль 2026",
+      "published": "2026-08-20",
+      "nextUpdate": null,
+      "approx": false,
+      "noNextUpdate": true,
+      "source": "Бюро нацстатистики РК",
+      "url": "https://stat.gov.kz/ru/industries/business-statistics/stat-industrial-production/",
+      "yoy": {
+        "value": 3.5,
+        "unit": "п.п.",
+        "refPeriod": "янв–июн 2025 (5.5%)"
+      },
+      "_raw_growth_pct": 9.0
+    },
+    {
+      "id": "iok",
+      "label": "ИОК",
+      "value": "11.46 трлн ₸",
+      "period": "Январь-июль 2026",
+      "published": "2026-08-20",
+      "nextUpdate": null,
+      "approx": false,
+      "noNextUpdate": true,
+      "source": "Бюро нацстатистики РК",
+      "url": "https://stat.gov.kz/ru/industries/business-statistics/stat-invest/",
+      "yoy": {
+        "value": 7.7,
+        "unit": "%",
+        "refPeriod": "январь-июль 2026 (в сопост. ценах)"
+      },
+      "_raw_value_bln_tenge": 11464.2
+    },
+    {
+      "id": "fdi",
+      "label": "Чистый приток ПИИ в Казахстан",
+      "value": "$3.07 млрд",
+      "period": "I квартал 2026",
+      "published": "2026-07-10",
+      "nextUpdate": "2026-09-30",
+      "approx": false,
+      "source": "Нацбанк РК",
+      "url": "https://nationalbank.kz/ru/news/pryamye-investicii-po-napravleniyu-vlozheniya",
+      "yoy": {
+        "value": 6.5,
+        "unit": "%",
+        "refPeriod": "I кв 2025 ($2.88 млрд)"
+      }
+    },
+    {
+      "id": "brent",
+      "label": "Нефть Brent (ICE)",
+      "value": "$84.84",
+      "period": "Фронт-месяц Oct26",
+      "published": "2026-08-10",
+      "nextUpdate": null,
+      "approx": false,
+      "noNextUpdate": true,
+      "source": "ICE Futures Europe",
+      "url": "https://www.ice.com/products/219/Brent-Crude-Futures/data",
+      "yoy": {
+        "value": 26.9,
+        "unit": "%",
+        "refPeriod": "≈ первая неделя августа 2025 ($66.83)"
+      },
+      "_raw_value_usd": 84.84
+    },
+    {
+      "id": "copper",
+      "label": "Медь (LME)",
+      "value": "$14 180",
+      "period": "Расчётная цена, 19.08.2026",
+      "published": "2026-08-19",
+      "nextUpdate": null,
+      "approx": false,
+      "noNextUpdate": true,
+      "source": "LME (через westmetall.com)",
+      "url": "https://www.westmetall.com/en/markdaten.php?action=table&field=LME_Cu_cash",
+      "yoy": {
+        "value": 47.4,
+        "unit": "%",
+        "refPeriod": "19.08.2025 ($9 622)"
+      },
+      "_raw_value_usd": 14180.0
+    },
+    {
+      "id": "deposits",
+      "label": "Вклады в БВУ (физ. + юр. лица)",
+      "value": "50.14 трлн ₸",
+      "period": "На конец июня 2026",
+      "published": "2026-07-16",
+      "nextUpdate": "2026-08-17",
+      "approx": false,
+      "source": "Нацбанк РК",
+      "url": "https://nationalbank.kz/ru/depositoryorganizationsdeposits/depozity-v-depozitnyh-organizaciyah-",
+      "yoy": {
+        "value": 18.9,
+        "unit": "%",
+        "refPeriod": "июня 2025 (42.17 трлн ₸)"
+      },
+      "_raw_value_mln_tenge": 50135442
+    },
+    {
+      "id": "liquidity",
+      "label": "Свободная ликвидность банков в бумагах гос-ва",
+      "value": "8.94 трлн ₸",
+      "period": "На 01.07.2026 (ГЦБ + ноты НБК, резиденты)",
+      "published": "2026-07-30",
+      "nextUpdate": "2026-10-30",
+      "approx": true,
+      "source": "Нацбанк РК",
+      "url": "https://nationalbank.kz/ru/news/banks-performance",
+      "yoy": {
+        "value": 12.0,
+        "unit": "%",
+        "refPeriod": "01.07.2025 (7.98 трлн ₸)"
+      }
+    },
+    {
+      "id": "base_rate",
+      "label": "Базовая ставка Нацбанка РК",
+      "value": "16.75%",
+      "period": "Действует с 27.07.2026",
+      "published": "2026-07-27",
+      "nextUpdate": "2026-09-04",
+      "approx": false,
+      "noNextUpdate": false,
+      "source": "Нацбанк РК",
+      "url": "https://nationalbank.kz/ru/news/grafik-prinyatiya-resheniy-po-bazovoy-stavke",
+      "yoy": null,
+      "_raw_value_pct": 16.75
     }
   ],
   "manual_only_ids": [
