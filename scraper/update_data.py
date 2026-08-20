@@ -118,7 +118,7 @@ def run(playwright_module):
     results = {}
     errors = []
 
-    browser = playwright_module.chromium.launch(executable_path="/opt/pw-browsers/chromium", headless=True)
+    browser = playwright_module.chromium.launch(headless=True)
     page = browser.new_page(user_agent="Mozilla/5.0 (compatible; KZEconDashboardBot/1.0)")
 
     def prev_value(item_id, field):
