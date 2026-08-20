@@ -132,8 +132,19 @@ def find_gdp_candidates(page):
     ordered = []
     for kw in GDP_SEARCH_KEYWORDS:
         url = f"https://www.gov.kz/memleket/entities/economy/press/news/1?lang=ru&title={quote(kw)}"
-        page.goto(url, timeout=45000, wait_until="load")
-        page.wait_for_selector("a[href*='/press/news/details/']", timeout=20000)
+        try:
+            # gov.kz — тяжёлый Angular-SPA: событие "load" наступает до того, как
+            # приложение успевает получить и отрисовать список через свой XHR, а
+            # в CI (в отличие от интерактивного браузера) это ощутимо медленнее —
+            # первый прогон с "load"/20000ms стабильно ловил таймаут на этом шаге
+            # для обоих ключевых слов. "networkidle" + запас по таймауту ждут
+            # именно того момента, когда список уже подгружен.
+            page.goto(url, timeout=45000, wait_until="networkidle")
+            page.wait_for_selector("a[href*='/press/news/details/']", timeout=40000)
+        except Exception:
+            # Не роняем весь поиск ВВП из-за одного из двух ключевых слов — второе
+            # может отработать нормально, этого достаточно, чтобы найти релиз.
+            continue
         page.wait_for_timeout(1500)  # SPA дорисовывает список чуть позже загрузки каркаса
         items = page.eval_on_selector_all(
             "a[href*='/press/news/details/']",
