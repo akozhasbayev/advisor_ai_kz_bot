@@ -215,7 +215,16 @@ def run(playwright_module):
     errors = []
 
     browser = playwright_module.chromium.launch(headless=True)
-    page = browser.new_page(user_agent="Mozilla/5.0 (compatible; KZEconDashboardBot/1.0)")
+    # Обычный UA настоящего браузера вместо самоопознающегося бота: gov.kz —
+    # проверено вручную, что конкретно эта статья и список релизов ВВП
+    # рендерятся и парсятся корректно в интерактивном браузере с обычным UA,
+    # но раз за разом не находятся в CI даже после увеличения таймаутов —
+    # похоже, сайт (или его WAF/CDN) отдаёт урезанный контент по UA с "Bot"
+    # в названии. Остальным источникам обычный UA не должен повредить.
+    page = browser.new_page(
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    )
 
     def prev_value(item_id, field):
         item = prev_by_id.get(item_id)
