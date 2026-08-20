@@ -17,13 +17,19 @@
      реально изменилось, и только успешно провалидированными пунктами
      (проблемные пункты остаются как были)
 
-Показатели ПИИ, свободная ликвидность банков и ВВП сюда не входят —
-остаются на ручном обновлении (см. README в этой папке).
+Показатели ПИИ и свободная ликвидность банков сюда не входят — остаются на
+ручном обновлении (см. README в этой папке; причина — источники отдают
+данные только в Excel, без веб-страницы для скрапинга). ВВП — особый
+случай: источник не таблица/плитка, а лента пресс-релизов МНЭ РК на
+gov.kz, поэтому вместо парсинга фиксированной страницы (find_gdp_release)
+перебираются заголовки в ленте, пока не найдётся распознаваемый релиз —
+см. комментарий там же.
 """
 import json
 import os
 import sys
 from datetime import date, datetime
+from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(__file__))
 import sources  # noqa: E402
@@ -59,6 +65,11 @@ SANITY = {
     "inflation_headline_pct": {"min": 0, "max": 30, "max_step_abs": 3},
     "manufacturing_growth_pct": {"min": -20, "max": 40, "max_step_abs": 6},
     "iok_bln_tenge": {"min": 1000, "max": 40000, "max_step": 0.30},
+    # У ВВП шаг не в п.п. изменения от месяца к месяцу (обычно доли п.п.),
+    # а в п.п. между значением на предыдущем автопрогоне и новым — сюда же
+    # попадает скачок на стыке года (декабрьский кумулятив -> январский
+    # кумулятив нового года), поэтому порог заметно шире остальных рейтов.
+    "gdp_growth_pct": {"min": -10, "max": 20, "max_step_abs": 5},
 }
 
 
@@ -103,6 +114,69 @@ def find_latest_inflation_url(page):
     if not href:
         raise ValidationFailed("инфляция: не нашёл ссылку на последнюю публикацию в списке")
     return href
+
+
+GDP_SEARCH_KEYWORDS = ("ВВП", "рост экономики")
+
+
+def find_gdp_candidates(page):
+    """Список (href, title) кандидатов в пресс-релиз о росте ВВП с сайта
+    gov.kz МНЭ РК, в порядке от новых к старым — так их и отдаёт сама лента.
+    Объединяем результаты по двум ключевым словам, потому что часть релизов
+    озаглавлена "Рост ВВП...", часть "Рост экономики..." — заранее не
+    угадать, какая формулировка будет у следующего релиза. Отбор по
+    is_gdp_release_title() отсеивает прогнозы, методики расчёта и т.п. ещё
+    на уровне заголовка, не открывая статью.
+    """
+    seen_hrefs = set()
+    ordered = []
+    for kw in GDP_SEARCH_KEYWORDS:
+        url = f"https://www.gov.kz/memleket/entities/economy/press/news/1?lang=ru&title={quote(kw)}"
+        page.goto(url, timeout=45000, wait_until="load")
+        page.wait_for_selector("a[href*='/press/news/details/']", timeout=20000)
+        page.wait_for_timeout(1500)  # SPA дорисовывает список чуть позже загрузки каркаса
+        items = page.eval_on_selector_all(
+            "a[href*='/press/news/details/']",
+            "els => els.map(e => ({href: e.href, title: e.innerText.trim()}))",
+        )
+        for it in items:
+            href, title = it["href"], it["title"]
+            if not title or href in seen_hrefs:
+                continue
+            if not sources.is_gdp_release_title(title):
+                continue
+            seen_hrefs.add(href)
+            ordered.append((href, title))
+    return ordered
+
+
+def find_gdp_release(page):
+    """Открывает кандидатов по очереди (в порядке ленты, новые сверху),
+    парсит первый успешно распознанный релиз как ТЕКУЩИЙ, затем продолжает
+    искать среди оставшихся релиз год назад с тем же концом периода
+    (тот же end_month, year - 1) — для сравнения г/г. Кандидаты с
+    нестандартной формулировкой (parse_gdp_release бросает ValueError)
+    просто пропускаются, это не фатально — идём дальше по списку.
+    """
+    candidates = find_gdp_candidates(page)
+    current = None
+    prior = None
+    for href, _title in candidates:
+        if current is not None and prior is not None:
+            break
+        try:
+            text = fetch_text(page, href, wait_ms=1500)
+            r = sources.parse_gdp_release(text)
+        except Exception:
+            continue
+        if current is None:
+            current = dict(r, url=href)
+            continue
+        if prior is None and r["end_month"] == current["end_month"] and r["year"] == current["year"] - 1:
+            prior = r
+    if current is None:
+        raise ValidationFailed("ВВП: не нашёл ни одного распознаваемого релиза о росте ВВП в ленте gov.kz")
+    return current, prior
 
 
 def load_prev_data():
@@ -193,6 +267,14 @@ def run(playwright_module):
     except Exception as e:
         errors.append(f"ИОК: {e}")
 
+    # -- ВВП ------------------------------------------------------------------
+    try:
+        current, prior = find_gdp_release(page)
+        sanity_check("gdp_growth_pct", current["value_pct"], prev_value("gdp", "_raw_value_pct"))
+        results["gdp"] = {"current": current, "prior": prior}
+    except Exception as e:
+        errors.append(f"ВВП: {e}")
+
     browser.close()
     return results, errors, prev
 
@@ -209,9 +291,29 @@ def to_dashboard_items(results, prev):
     def days_between(iso_a, iso_b):
         return (date.fromisoformat(iso_b) - date.fromisoformat(iso_a)).days
 
-    # ВВП, ПИИ, свободная ликвидность — не трогаем, переносим как есть
-    for manual_id in ("gdp", "fdi", "liquidity"):
+    # ПИИ, свободная ликвидность — не трогаем, переносим как есть (см. докстринг
+    # модуля: у них нет веб-страницы для скрапинга, только Excel-выгрузки)
+    for manual_id in ("fdi", "liquidity"):
         old = keep_prev(manual_id)
+        if old:
+            items.append(old)
+
+    if "gdp" in results:
+        r = results["gdp"]["current"]
+        prior = results["gdp"]["prior"]
+        items.append({
+            "id": "gdp", "label": "Рост ВВП (г/г)",
+            "value": f"{r['value_pct']}%",
+            "period": f"{r['period_phrase'].capitalize()} {r['year']}",
+            "published": r.get("published") or date.today().isoformat(),
+            "nextUpdate": None, "approx": False, "noNextUpdate": True,
+            "source": "МНЭ РК (gov.kz)", "url": r["url"],
+            "yoy": {"value": round(r["value_pct"] - prior["value_pct"], 1), "unit": "п.п.",
+                    "refPeriod": f"{prior['period_phrase']} {prior['year']} ({prior['value_pct']}%)"} if prior else None,
+            "_raw_value_pct": r["value_pct"],
+        })
+    else:
+        old = keep_prev("gdp")
         if old:
             items.append(old)
 
@@ -362,12 +464,12 @@ def main():
     new_data = {
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "items": items,
-        "manual_only_ids": ["gdp", "fdi", "liquidity"],
+        "manual_only_ids": ["fdi", "liquidity"],
     }
 
     with open(DATA_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(new_data, f, ensure_ascii=False, indent=2)
-    print(f"Обновлено показателей: {len(results)}/7")
+    print(f"Обновлено показателей: {len(results)}/8")
     if errors:
         print("\nПроблемы (данные по этим пунктам НЕ обновлены, оставлены прежние):")
         for e in errors:

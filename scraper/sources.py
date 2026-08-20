@@ -332,3 +332,129 @@ def parse_iok(text):
         "period_label": f"{period_month} {year}",
         "yoy_pct": round(_num(yoy_index) - 100, 1),
     }
+
+
+# ----------------------------------------------------------------------------
+# 8. ВВП (рост, г/г) — пресс-релизы МНЭ РК на gov.kz
+# ----------------------------------------------------------------------------
+RU_MONTH_NUM_WORDS = {
+    "один": 1, "два": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6,
+    "семь": 7, "восемь": 8, "девять": 9, "десять": 10, "одиннадцать": 11, "двенадцать": 12,
+}
+
+# Ловим заголовочную фразу-якорь релиза: "по итогам <период> <ГОД> года" /
+# "за <период> <ГОД> года" — этот шаблон устойчиво повторяется из релиза в
+# релиз (проверено на реальных фрагментах 2025-2026гг.), хотя порядок слов
+# вокруг него (глагол, "согласно предварительным данным БНС" и т.п.) гуляет.
+GDP_ANCHOR_RE = re.compile(
+    r'(?:по\s+итогам|за)\s+([^,.\n]+?)\s+(?:(\d{4})\s+года|текущего\s+года)',
+    re.IGNORECASE,
+)
+# Само значение роста ищем отдельно, рядом с якорем, а не всем текстом —
+# дальше в статье попадаются проценты роста ДРУГИХ показателей (промышленность,
+# торговля и т.д.), которые не должны попасть в карточку ВВП. Два варианта
+# формулировки встречаются примерно поровну: развёрнутая статистическая
+# ("ВВП/валовой внутренний продукт Казахстана составил/увеличился на X%") и
+# короткая, из протокола заседания Правительства ("прирост ВВП
+# составляет/составил X%").
+GDP_VALUE_RE = re.compile(
+    r'(?:(?:ВВП|валовой\s+внутренний\s+продукт)\s+Казахстана|прирост\s+ВВП)\s+'
+    r'(?:составил|составляет|увеличил(?:ся|ась)\s+на|вырос(?:ла)?\s+на|ускорил(?:ся|ась)\s+до)\s+'
+    r'(\d{1,2},\d)\s*%',
+    re.IGNORECASE,
+)
+GDP_TITLE_ROST_RE = re.compile(r'\b(?:при)?рост\w*\b', re.IGNORECASE)
+GDP_TITLE_FORECAST_RE = re.compile(r'прогноз', re.IGNORECASE)
+GDP_PUBLISHED_RE = re.compile(
+    r'(\d{1,2})\s+(' + "|".join(MONTHS_RU_GENITIVE) + r')\s+(\d{4})\s+\d{1,2}:\d{2}'
+)
+
+
+def _period_end_month(period_phrase):
+    """'первого полугодия' -> 6, 'января-октября'/'январь-октябрь' -> 10,
+    '8 месяцев' -> 8, 'семь месяцев' -> 7, 'января-декабря' (годовой итог) -> 12."""
+    t = period_phrase.lower().replace("–", "-").replace("—", "-")
+    if "полугод" in t:
+        return 6
+    m = re.search(r"(\d{1,2})\s*месяц", t)
+    if m:
+        return int(m.group(1))
+    for word, num in RU_MONTH_NUM_WORDS.items():
+        if re.search(rf"\b{word}\s+месяц", t):
+            return num
+    last = re.split(r"[-\s]", t.strip())[-1].strip()
+    for name, num in list(MONTHS_RU_GENITIVE.items()) + list(MONTHS_RU_NOMINATIVE.items()):
+        if last.startswith(name[:6]):
+            return num
+    return None
+
+
+def is_gdp_release_title(title):
+    """Грубый фильтр заголовков в списке gov.kz (перед тем как открывать статью
+    целиком): похоже на фактический релиз с цифрой роста, а не на прогноз,
+    методику расчёта, долю МСБ в ВВП и т.п. Заголовки такого рода:
+      "Рост ВВП Казахстана за 7 месяцев 2025 года составил 6,3%"          -> True
+      "Рост экономики Казахстана по итогам первого полугодия ... 4,1%"    -> True
+      "Правительство прогнозирует рост экономики ... на уровне ... 5,3%"  -> False (прогноз)
+      "Доля МСБ в ВВП Казахстана выросла до 40,9%"                        -> False (нет "рост")
+      "Министерство утвердило методику расчета потенциального ВВП"       -> False (нет "%")
+    """
+    if "%" not in title:
+        return False
+    if not GDP_TITLE_ROST_RE.search(title):
+        return False
+    if GDP_TITLE_FORECAST_RE.search(title):
+        return False
+    return True
+
+
+def parse_gdp_release(text):
+    """
+    Источник: конкретный пресс-релиз вида
+    https://www.gov.kz/memleket/entities/economy/press/news/details/<id>?lang=ru
+    Первый абзац почти всегда содержит фразу вида "По итогам {периода} {ГОД}
+    года ... ВВП Казахстана составил X,X%" (глагол варьируется: составил /
+    увеличился на / вырос на / ускорился до). Дата публикации — отдельной
+    строкой сразу под заголовком, вида "14 июля 2026 11:58".
+    """
+    am = GDP_ANCHOR_RE.search(text)
+    if not am:
+        raise ValueError("ВВП: не нашёл фразу-якорь 'по итогам/за ... <ГОД> года' в тексте релиза")
+    period_phrase, year = am.groups()
+    period_phrase = period_phrase.strip()
+
+    # Ищем значение и дату публикации в достаточно широком окне с начала
+    # текста — короткая формулировка ("прирост ВВП составляет X%", из
+    # протокола заседания Правительства) обычно идёт внутри длинной цитаты
+    # и оказывается дальше от начала статьи, чем в развёрнутых пресс-релизах.
+    window = text[:1600]
+    vm = GDP_VALUE_RE.search(window)
+    if not vm:
+        raise ValueError("ВВП: не нашёл фразу с процентом роста ВВП рядом с началом релиза")
+    value_pct = _num(vm.group(1))
+
+    end_month = _period_end_month(period_phrase)
+    if end_month is None:
+        raise ValueError(f"ВВП: не смог определить последний месяц периода из фразы '{period_phrase}'")
+
+    pub_m = GDP_PUBLISHED_RE.search(window)
+    published = None
+    if pub_m:
+        d, month_name, y = pub_m.groups()
+        published = date(int(y), MONTHS_RU_GENITIVE[month_name], int(d)).isoformat()
+
+    if year is None:
+        # "... текущего года" — год берём из даты публикации релиза.
+        if not published:
+            raise ValueError("ВВП: период дан как 'текущего года', но не нашёл дату публикации, чтобы определить год")
+        year = date.fromisoformat(published).year
+    else:
+        year = int(year)
+
+    return {
+        "period_phrase": period_phrase,
+        "year": year,
+        "end_month": end_month,
+        "value_pct": value_pct,
+        "published": published,
+    }
