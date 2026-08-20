@@ -1,0 +1,42 @@
+name: Обновление новостей
+
+on:
+  schedule:
+    # 07:00 по Алматы (UTC+5, без перехода на летнее время) = 02:00 UTC.
+    - cron: "0 2 * * *"
+  workflow_dispatch: {} # кнопка "Run workflow" в вкладке Actions — запуск вручную
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Зависимостей нет: rss_lite.py и вызов Anthropic API написаны на
+      # чистой стандартной библиотеке (urllib, xml.etree) — см. комментарии
+      # в scraper/rss_lite.py и scraper/update_news.py, почему сознательно
+      # без feedparser/anthropic.
+      - name: Запустить сборщик новостей
+        id: run_news
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python3 scraper/update_news.py
+
+      - name: Закоммитить news.json/opportunities.json, если изменились
+        run: |
+          git config user.name "kz-econ-dashboard-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet -- news.json opportunities.json; then
+            echo "Изменений нет, коммит не нужен"
+          else
+            git add news.json opportunities.json
+            git commit -m "Автообновление новостей"
+            git push
+          fi
