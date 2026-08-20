@@ -27,6 +27,7 @@ gov.kz, поэтому вместо парсинга фиксированной 
 """
 import json
 import os
+import re
 import sys
 from datetime import date, datetime
 from urllib.parse import quote
@@ -130,14 +131,39 @@ def find_latest_inflation_url(page):
 GDP_SEARCH_KEYWORDS = ("ВВП", "рост экономики")
 
 
+def _gov_kz_article_id(href):
+    """Числовой id статьи из URL (.../details/1257661?...) — на gov.kz он
+    монотонно растёт с датой публикации (проверено вручную 2026-08-20:
+    статья от 14 июля 2026 имеет id 1257661, статья от 12 января 2026 —
+    id 1139501). Используется, чтобы сортировать кандидатов по реальной
+    свежести, а не по тому, каким ключевым словом их нашли — см. комментарий
+    в find_gdp_candidates про баг, который эта сортировка чинит."""
+    m = re.search(r"/details/(\d+)", href)
+    return int(m.group(1)) if m else -1
+
+
 def find_gdp_candidates(page):
     """Список (href, title) кандидатов в пресс-релиз о росте ВВП с сайта
-    gov.kz МНЭ РК, в порядке от новых к старым — так их и отдаёт сама лента.
-    Объединяем результаты по двум ключевым словам, потому что часть релизов
-    озаглавлена "Рост ВВП...", часть "Рост экономики..." — заранее не
-    угадать, какая формулировка будет у следующего релиза. Отбор по
-    is_gdp_release_title() отсеивает прогнозы, методики расчёта и т.п. ещё
-    на уровне заголовка, не открывая статью.
+    gov.kz МНЭ РК, отсортированный от новых к старым по числовому id статьи
+    (см. _gov_kz_article_id). Объединяем результаты по двум ключевым словам,
+    потому что часть релизов озаглавлена "Рост ВВП...", часть "Рост
+    экономики..." — заранее не угадать, какая формулировка будет у
+    следующего релиза. Отбор по is_gdp_release_title() отсеивает прогнозы,
+    методики расчёта и т.п. ещё на уровне заголовка, не открывая статью.
+
+    ВАЖНО: раньше кандидаты просто конкатенировались в порядке ключевых
+    слов (сначала все результаты по "ВВП", потом все по "рост экономики"),
+    и find_gdp_release() брал первый успешно распарсенный — это работало,
+    только пока и правда более свежий релиз оказывался первым в списке
+    результатов по первому ключевому слову. На практике это не так: самый
+    свежий релиз (за первое полугодие 2026, 4,1%, от 14.07.2026) находится
+    ТОЛЬКО по слову "рост экономики" (во втором проходе), а по слову "ВВП"
+    (первый проход) в топе результатов оказывается более старый годовой
+    отчёт (за 2025 год, 6,5%, от 12.01.2026) — из-за конкатенации без
+    сортировки годовой отчёт шёл первым, и карточка дэшборда показывала
+    устаревшие годовые 6,5% вместо актуальных ежемесячных 4,1%. Явная
+    сортировка по id ниже гарантирует, что "новее" значит на самом деле
+    новее, независимо от того, каким ключевым словом кандидат найден.
     """
     seen_hrefs = set()
     ordered = []
@@ -169,6 +195,7 @@ def find_gdp_candidates(page):
                 continue
             seen_hrefs.add(href)
             ordered.append((href, title))
+    ordered.sort(key=lambda pair: _gov_kz_article_id(pair[0]), reverse=True)
     return ordered
 
 
@@ -322,12 +349,24 @@ def to_dashboard_items(results, prev):
     def days_between(iso_a, iso_b):
         return (date.fromisoformat(iso_b) - date.fromisoformat(iso_a)).days
 
-    # ПИИ, свободная ликвидность — не трогаем, переносим как есть (см. докстринг
-    # модуля: у них нет веб-страницы для скрапинга, только Excel-выгрузки)
-    for manual_id in ("fdi", "liquidity"):
-        old = keep_prev(manual_id)
+    def append_manual(item_id):
+        """ПИИ и свободная ликвидность — не трогаем, переносим как есть
+        (см. докстринг модуля: у них нет веб-страницы для скрапинга, только
+        Excel-выгрузки). В отличие от остальных пунктов, вызывается не в
+        одном месте, а там, где эта карточка должна стоять по порядку —
+        см. порядок вызовов ниже."""
+        old = keep_prev(item_id)
         if old:
             items.append(old)
+
+    # Порядок ниже — это порядок карточек на дэшборде (ВВП → Инфляция →
+    # Рост обраб. пром-ти → ИОК → ПИИ → Brent → Медь → Вклады БВУ →
+    # Свободная ликвидность → Базовая ставка), а НЕ порядок скрапинга в
+    # run() — он вообще про другое. Раньше блоки шли в порядке "как
+    # исторически дописывались", и добавление ВВП автообновления сдвинуло
+    # его после ПИИ/ликвидности, из-за чего на дэшборде первой картой стала
+    # ПИИ вместо ВВП — теперь порядок вызовов ниже явный и соответствует
+    # списку выше один в один.
 
     if "gdp" in results:
         r = results["gdp"]["current"]
@@ -348,22 +387,31 @@ def to_dashboard_items(results, prev):
         if old:
             items.append(old)
 
-    if "base_rate" in results:
-        r = results["base_rate"]
-        nxt = prev_by_id.get("base_rate", {}).get("nextUpdate")
-        items.append({
-            "id": "base_rate", "label": "Базовая ставка Нацбанка РК",
-            "value": f"{r['value_pct']:.2f}".rstrip("0").rstrip(".") + "%",
-            "period": f"Действует с {date.fromisoformat(r['effective_date']).strftime('%d.%m.%Y')}",
-            "published": r["effective_date"], "nextUpdate": nxt, "approx": False,
-            "noNextUpdate": nxt is None,
-            "source": "Нацбанк РК", "url": "https://nationalbank.kz/ru/news/grafik-prinyatiya-resheniy-po-bazovoy-stavke",
-            "yoy": None, "_raw_value_pct": r["value_pct"],
-        })
+    if "inflation" in results:
+        r = results["inflation"]
+        anchor = ANCHORS["inflation_prior_year"]
+        for suffix, label, cur_key, anchor_key in (
+            ("headline", "Инфляция (г/г)", "headline_pct", "headline"),
+            ("food", "Инфляция: продовольственные товары (г/г)", "food_pct", "food"),
+            ("nonfood", "Инфляция: непродовольственные товары (г/г)", "nonfood_pct", "nonfood"),
+            ("services", "Инфляция: платные услуги (г/г)", "services_pct", "services"),
+        ):
+            cur_v = r[cur_key]
+            anchor_v = anchor[anchor_key]
+            items.append({
+                "id": f"inflation_{suffix}", "label": label, "value": f"{cur_v}%",
+                "period": r["period_label"].capitalize(), "published": r["published"], "nextUpdate": r["next_update"],
+                "approx": False, "source": "Бюро нацстатистики РК",
+                "url": "https://stat.gov.kz/ru/industries/economy/prices/publications/",
+                "yoy": {"value": round(cur_v - anchor_v, 1), "unit": "п.п.",
+                        "refPeriod": f"{anchor['period']} ({anchor_v}%)"},  # см. ANCHORS[...]["refresh_by"] выше и scraper/README.md
+                "_raw_headline_pct": cur_v if suffix == "headline" else None,
+            })
     else:
-        old = keep_prev("base_rate")
-        if old:
-            items.append(old)
+        for suffix in ("headline", "food", "nonfood", "services"):
+            old = keep_prev(f"inflation_{suffix}")
+            if old:
+                items.append(old)
 
     if "manufacturing" in results:
         r = results["manufacturing"]
@@ -397,6 +445,8 @@ def to_dashboard_items(results, prev):
         old = keep_prev("iok")
         if old:
             items.append(old)
+
+    append_manual("fdi")
 
     if "brent" in results:
         r = results["brent"]
@@ -456,31 +506,24 @@ def to_dashboard_items(results, prev):
         if old:
             items.append(old)
 
-    if "inflation" in results:
-        r = results["inflation"]
-        anchor = ANCHORS["inflation_prior_year"]
-        for suffix, label, cur_key, anchor_key in (
-            ("headline", "Инфляция (г/г)", "headline_pct", "headline"),
-            ("food", "Инфляция: продовольственные товары (г/г)", "food_pct", "food"),
-            ("nonfood", "Инфляция: непродовольственные товары (г/г)", "nonfood_pct", "nonfood"),
-            ("services", "Инфляция: платные услуги (г/г)", "services_pct", "services"),
-        ):
-            cur_v = r[cur_key]
-            anchor_v = anchor[anchor_key]
-            items.append({
-                "id": f"inflation_{suffix}", "label": label, "value": f"{cur_v}%",
-                "period": r["period_label"].capitalize(), "published": r["published"], "nextUpdate": r["next_update"],
-                "approx": False, "source": "Бюро нацстатистики РК",
-                "url": "https://stat.gov.kz/ru/industries/economy/prices/publications/",
-                "yoy": {"value": round(cur_v - anchor_v, 1), "unit": "п.п.",
-                        "refPeriod": f"{anchor['period']} ({anchor_v}%)"},  # см. ANCHORS[...]["refresh_by"] выше и scraper/README.md
-                "_raw_headline_pct": cur_v if suffix == "headline" else None,
-            })
+    append_manual("liquidity")
+
+    if "base_rate" in results:
+        r = results["base_rate"]
+        nxt = prev_by_id.get("base_rate", {}).get("nextUpdate")
+        items.append({
+            "id": "base_rate", "label": "Базовая ставка Нацбанка РК",
+            "value": f"{r['value_pct']:.2f}".rstrip("0").rstrip(".") + "%",
+            "period": f"Действует с {date.fromisoformat(r['effective_date']).strftime('%d.%m.%Y')}",
+            "published": r["effective_date"], "nextUpdate": nxt, "approx": False,
+            "noNextUpdate": nxt is None,
+            "source": "Нацбанк РК", "url": "https://nationalbank.kz/ru/news/grafik-prinyatiya-resheniy-po-bazovoy-stavke",
+            "yoy": None, "_raw_value_pct": r["value_pct"],
+        })
     else:
-        for suffix in ("headline", "food", "nonfood", "services"):
-            old = keep_prev(f"inflation_{suffix}")
-            if old:
-                items.append(old)
+        old = keep_prev("base_rate")
+        if old:
+            items.append(old)
 
     return items
 
