@@ -1,22 +1,6 @@
 {
-  "generated_at": "2026-08-20T05:32:10.049178Z",
+  "generated_at": "2026-08-20T06:13:37.018805Z",
   "items": [
-    {
-      "id": "gdp",
-      "label": "Рост ВВП (г/г)",
-      "value": "4.1%",
-      "period": "Январь–июнь 2026",
-      "published": "2026-07-14",
-      "nextUpdate": "2026-08-14",
-      "approx": true,
-      "source": "МНЭ РК (gov.kz)",
-      "url": "https://www.gov.kz/memleket/entities/economy/press/news/details/1257661?lang=ru",
-      "yoy": {
-        "value": -2.1,
-        "unit": "п.п.",
-        "refPeriod": "янв–июн 2025 (6.2%)"
-      }
-    },
     {
       "id": "fdi",
       "label": "Чистый приток ПИИ в Казахстан",
@@ -47,6 +31,22 @@
         "value": 12.0,
         "unit": "%",
         "refPeriod": "01.07.2025 (7.98 трлн ₸)"
+      }
+    },
+    {
+      "id": "gdp",
+      "label": "Рост ВВП (г/г)",
+      "value": "4.1%",
+      "period": "Январь–июнь 2026",
+      "published": "2026-07-14",
+      "nextUpdate": "2026-08-14",
+      "approx": true,
+      "source": "МНЭ РК (gov.kz)",
+      "url": "https://www.gov.kz/memleket/entities/economy/press/news/details/1257661?lang=ru",
+      "yoy": {
+        "value": -2.1,
+        "unit": "п.п.",
+        "refPeriod": "янв–июн 2025 (6.2%)"
       }
     },
     {
@@ -222,7 +222,6 @@
     }
   ],
   "manual_only_ids": [
-    "gdp",
     "fdi",
     "liquidity"
   ]
