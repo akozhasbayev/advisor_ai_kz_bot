@@ -104,6 +104,17 @@ def fetch_text(page, url, wait_selector=None, wait_ms=0):
     return page.inner_text("body")
 
 
+def fetch_gov_kz_text(page, url):
+    """Как fetch_text, но специально под gov.kz: там же, где "load" не дожидается
+    XHR-подгрузки Angular-приложения (см. комментарий в find_gdp_candidates),
+    та же проблема бьёт и по отдельным страницам релизов — их текст иногда
+    ещё не дорисован к моменту чтения innerText, из-за чего parse_gdp_release
+    не находит фразу-якорь и ошибочно пропускает валидный релиз."""
+    page.goto(url, timeout=45000, wait_until="networkidle")
+    page.wait_for_timeout(1000)
+    return page.inner_text("body")
+
+
 def find_latest_inflation_url(page):
     """Страница-список публикаций отсортирована от новых к старым — берём первую ссылку на 'Инфляция в Республике Казахстан (...)'."""
     page.goto("https://stat.gov.kz/ru/industries/economy/prices/publications/", timeout=45000, wait_until="load")
@@ -176,7 +187,7 @@ def find_gdp_release(page):
         if current is not None and prior is not None:
             break
         try:
-            text = fetch_text(page, href, wait_ms=1500)
+            text = fetch_gov_kz_text(page, href)
             r = sources.parse_gdp_release(text)
         except Exception:
             continue
