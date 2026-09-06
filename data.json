@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-05T02:44:07.096976Z",
+  "generated_at": "2026-09-06T02:41:44.437964Z",
   "items": [
     {
       "id": "gdp",
@@ -88,7 +88,7 @@
       "label": "Рост обрабатывающей промышленности (г/г)",
       "value": "9.0%",
       "period": "Январь-июль 2026",
-      "published": "2026-09-05",
+      "published": "2026-09-06",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
@@ -106,7 +106,7 @@
       "label": "ИОК",
       "value": "11.46 трлн ₸",
       "period": "Январь-июль 2026",
-      "published": "2026-09-05",
+      "published": "2026-09-06",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
