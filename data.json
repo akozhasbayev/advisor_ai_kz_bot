@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-15T03:11:20.785072Z",
+  "generated_at": "2026-09-16T03:07:56.674177Z",
   "items": [
     {
       "id": "gdp",
@@ -88,7 +88,7 @@
       "label": "Рост обрабатывающей промышленности (г/г)",
       "value": "9.0%",
       "period": "Январь-июль 2026",
-      "published": "2026-09-15",
+      "published": "2026-09-16",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
@@ -106,7 +106,7 @@
       "label": "ИОК",
       "value": "11.46 трлн ₸",
       "period": "Январь-июль 2026",
-      "published": "2026-09-15",
+      "published": "2026-09-16",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
@@ -156,9 +156,9 @@
     {
       "id": "copper",
       "label": "Медь (LME)",
-      "value": "$14 044",
-      "period": "Расчётная цена, 14.09.2026",
-      "published": "2026-09-14",
+      "value": "$14 045",
+      "period": "Расчётная цена, 15.09.2026",
+      "published": "2026-09-15",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
@@ -169,7 +169,7 @@
         "unit": "%",
         "refPeriod": "15.09.2025 ($9 986)"
       },
-      "_raw_value_usd": 14044.0
+      "_raw_value_usd": 14045.0
     },
     {
       "id": "deposits",
