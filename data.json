@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-21T03:06:59.300624Z",
+  "generated_at": "2026-09-22T03:05:45.209860Z",
   "items": [
     {
       "id": "gdp",
@@ -88,7 +88,7 @@
       "label": "Рост обрабатывающей промышленности (г/г)",
       "value": "12.9%",
       "period": "Январь-август 2026",
-      "published": "2026-09-21",
+      "published": "2026-09-22",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
@@ -106,7 +106,7 @@
       "label": "ИОК",
       "value": "13.51 трлн ₸",
       "period": "Январь-август 2026",
-      "published": "2026-09-21",
+      "published": "2026-09-22",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
@@ -156,20 +156,20 @@
     {
       "id": "copper",
       "label": "Медь (LME)",
-      "value": "$14 529",
-      "period": "Расчётная цена, 18.09.2026",
-      "published": "2026-09-18",
+      "value": "$14 788",
+      "period": "Расчётная цена, 21.09.2026",
+      "published": "2026-09-21",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
       "source": "LME (через westmetall.com)",
       "url": "https://www.westmetall.com/en/markdaten.php?action=table&field=LME_Cu_cash",
       "yoy": {
-        "value": 46.8,
+        "value": 49.1,
         "unit": "%",
-        "refPeriod": "18.09.2025 ($9 895)"
+        "refPeriod": "22.09.2025 ($9 922)"
       },
-      "_raw_value_usd": 14529.0
+      "_raw_value_usd": 14788.0
     },
     {
       "id": "deposits",
