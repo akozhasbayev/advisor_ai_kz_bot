@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T02:57:18.759607Z",
+  "generated_at": "2026-10-17T02:48:28.922719Z",
   "items": [
     {
       "id": "gdp",
@@ -86,38 +86,38 @@
     {
       "id": "manufacturing",
       "label": "Рост обрабатывающей промышленности (г/г)",
-      "value": "12.9%",
-      "period": "Январь-август 2026",
-      "published": "2026-10-16",
+      "value": "8.6%",
+      "period": "Январь-сентябрь 2026",
+      "published": "2026-10-17",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
       "source": "Бюро нацстатистики РК",
       "url": "https://stat.gov.kz/ru/industries/business-statistics/stat-industrial-production/",
       "yoy": {
-        "value": 7.4,
+        "value": 3.1,
         "unit": "п.п.",
         "refPeriod": "янв–июн 2025 (5.5%)"
       },
-      "_raw_growth_pct": 12.9
+      "_raw_growth_pct": 8.6
     },
     {
       "id": "iok",
       "label": "ИОК",
-      "value": "13.51 трлн ₸",
-      "period": "Январь-август 2026",
-      "published": "2026-10-16",
+      "value": "16.08 трлн ₸",
+      "period": "Январь-сентябрь 2026",
+      "published": "2026-10-17",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
       "source": "Бюро нацстатистики РК",
       "url": "https://stat.gov.kz/ru/industries/business-statistics/stat-invest/",
       "yoy": {
-        "value": 8.1,
+        "value": 7.0,
         "unit": "%",
-        "refPeriod": "январь-август 2026 (в сопост. ценах)"
+        "refPeriod": "январь-сентябрь 2026 (в сопост. ценах)"
       },
-      "_raw_value_bln_tenge": 13505.7
+      "_raw_value_bln_tenge": 16081.4
     },
     {
       "id": "fdi",
@@ -156,20 +156,20 @@
     {
       "id": "copper",
       "label": "Медь (LME)",
-      "value": "$14 539",
-      "period": "Расчётная цена, 15.10.2026",
-      "published": "2026-10-15",
+      "value": "$14 595",
+      "period": "Расчётная цена, 16.10.2026",
+      "published": "2026-10-16",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
       "source": "LME (через westmetall.com)",
       "url": "https://www.westmetall.com/en/markdaten.php?action=table&field=LME_Cu_cash",
       "yoy": {
-        "value": 35.9,
+        "value": 39.1,
         "unit": "%",
-        "refPeriod": "15.10.2025 ($10 702)"
+        "refPeriod": "16.10.2025 ($10 495)"
       },
-      "_raw_value_usd": 14539.0
+      "_raw_value_usd": 14595.0
     },
     {
       "id": "deposits",
