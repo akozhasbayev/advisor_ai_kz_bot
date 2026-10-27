@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-26T02:59:16.313631Z",
+  "generated_at": "2026-10-27T03:31:56.633974Z",
   "items": [
     {
       "id": "gdp",
@@ -88,7 +88,7 @@
       "label": "Рост обрабатывающей промышленности (г/г)",
       "value": "8.6%",
       "period": "Январь-сентябрь 2026",
-      "published": "2026-10-26",
+      "published": "2026-10-27",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
@@ -106,7 +106,7 @@
       "label": "ИОК",
       "value": "16.08 трлн ₸",
       "period": "Январь-сентябрь 2026",
-      "published": "2026-10-26",
+      "published": "2026-10-27",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
@@ -156,20 +156,20 @@
     {
       "id": "copper",
       "label": "Медь (LME)",
-      "value": "$14 415",
-      "period": "Расчётная цена, 23.10.2026",
-      "published": "2026-10-23",
+      "value": "$14 500",
+      "period": "Расчётная цена, 26.10.2026",
+      "published": "2026-10-26",
       "nextUpdate": null,
       "approx": false,
       "noNextUpdate": true,
       "source": "LME (через westmetall.com)",
       "url": "https://www.westmetall.com/en/markdaten.php?action=table&field=LME_Cu_cash",
       "yoy": {
-        "value": 33.5,
+        "value": 32.0,
         "unit": "%",
-        "refPeriod": "23.10.2025 ($10 797)"
+        "refPeriod": "27.10.2025 ($10 987)"
       },
-      "_raw_value_usd": 14415.0
+      "_raw_value_usd": 14500.0
     },
     {
       "id": "deposits",
@@ -207,16 +207,16 @@
     {
       "id": "base_rate",
       "label": "Базовая ставка Нацбанка РК",
-      "value": "16.25%",
-      "period": "Действует с 07.09.2026",
-      "published": "2026-09-07",
+      "value": "15.75%",
+      "period": "Действует с 27.10.2026",
+      "published": "2026-10-27",
       "nextUpdate": "2026-09-04",
       "approx": false,
       "noNextUpdate": false,
       "source": "Нацбанк РК",
       "url": "https://nationalbank.kz/ru/news/grafik-prinyatiya-resheniy-po-bazovoy-stavke",
       "yoy": null,
-      "_raw_value_pct": 16.25
+      "_raw_value_pct": 15.75
     }
   ],
   "manual_only_ids": [
